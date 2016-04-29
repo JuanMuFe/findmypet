@@ -38,7 +38,7 @@ public class LoginActivity extends AppCompatActivity {
         registerButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
             //iniciar la actividad para enseñar el formulario de registro
-                cridaActivityRegister();
+            cridaActivityRegister();
             setContentView(R.layout.register_layout);
             }
         });
