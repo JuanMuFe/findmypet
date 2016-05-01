@@ -1,0 +1,1 @@
+include ':app', ':libs', ':mysql-connector-java-5.1.38-bin'

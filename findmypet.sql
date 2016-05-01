@@ -1,3 +1,6 @@
+/*CREATE USER 'petadmin'@'localhost' IDENTIFIED BY 'admin';
+GRANT ALL PRIVILEGES ON findmypet.* TO 'petadmin'@'localhost' WITH GRANT OPTION;*/
+
 -- phpMyAdmin SQL Dump
 -- version 4.0.9
 -- http://www.phpmyadmin.net
