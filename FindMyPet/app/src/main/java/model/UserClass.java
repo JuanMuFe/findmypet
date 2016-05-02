@@ -22,6 +22,11 @@ public class UserClass {
         this.image = image;
     }
 
+    public UserClass(String userName, String password){
+        this.userName = userName;
+        this.password = password;
+    }
+
     public UserClass(int idProfile, String userName, String password, String email, int active, String image) {
         this.idProfile = idProfile;
         this.userName = userName;
@@ -29,6 +34,15 @@ public class UserClass {
         this.email = email;
         this.active = active;
         this.image = image;
+    }
+
+    public UserClass(int idProfile, String userName, String password, String email,int active) {
+        this.idProfile = idProfile;
+        this.userName = userName;
+        this.password = password;
+        this.email = email;
+        this.active = active;
+
     }
 
     public int getId() {

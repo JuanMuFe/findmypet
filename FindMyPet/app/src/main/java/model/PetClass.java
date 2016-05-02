@@ -29,6 +29,15 @@ public class PetClass {
         this.description = description;
     }
 
+    public PetClass( int idOwner, String name, String race, String description) {
+        this.idOwner = idOwner;
+        this.name = name;
+        this.race = race;
+        this.description = description;
+    }
+
+
+
     public int getId() {
         return id;
     }
