@@ -37,7 +37,7 @@ public class PetAdministrationActivity extends AppCompatActivity {
         description = (EditText)findViewById(R.id.description);
 
 
-        imageButton = (Button)findViewById(R.id.imageButton);
+       /* imageButton = (Button)findViewById(R.id.imageButton);
 
         imageButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -46,12 +46,10 @@ public class PetAdministrationActivity extends AppCompatActivity {
 
                 startActivityForResult(i, RESULT_LOAD_IMAGE);
             }
-        });
+        });*/
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-
-
                 petAdministration(name.getText().toString(), race.getText().toString(),description.getText().toString(),picturePath);
             }
         });

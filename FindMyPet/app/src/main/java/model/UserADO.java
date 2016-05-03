@@ -1,5 +1,8 @@
 package model;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 /**
  * Created by Alumne on 30/04/2016.
  */
@@ -12,7 +15,7 @@ public class UserADO {
 
     }
 
-    public UserClass getUserExit(UserClass u)
+   /* public UserClass getUserExit(UserClass u)
     {
         int result = -1;
         UserClass checkuser=null;
@@ -41,7 +44,7 @@ public class UserADO {
 
 
         return checkuser;
-    }
+    }*/
 
     private UserClass resultsetToUser(ResultSet rs) throws SQLException {
         UserClass u = null;

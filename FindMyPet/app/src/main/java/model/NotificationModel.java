@@ -1,6 +1,6 @@
 package model;
 
-import persistence.NotificationADO;
+import persistence.UserNotificationADO;
 
 
 /**
@@ -10,8 +10,8 @@ public class NotificationModel {
 
     public void setNotificationAsReaded(NotificationClass n)
     {
-        NotificationADO nADO = new NotificationADO();
-        nADO.setNotificationAsReaded(n);
+        UserNotificationADO nADO = new UserNotificationADO();
+       // nADO.setNotificationAsReaded(n);
 
     }
 

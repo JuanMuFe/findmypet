@@ -39,10 +39,7 @@ public class SearchActivity extends AppCompatActivity {
 
     }
 
-
-
     private void searchUser(String text) {
-
         UserClass u = new UserClass();
         u.setUserName(text);
         u.setEmail(text);
@@ -53,7 +50,6 @@ public class SearchActivity extends AppCompatActivity {
         List<OwnerClass> ownerList = uModel.searchUser(u,o);
     }
 
-
     public void cridaActivityRegister(){
         Intent intent = new Intent(this, RegisterActivity.class);
         startActivity(intent);
@@ -63,6 +59,4 @@ public class SearchActivity extends AppCompatActivity {
     private void messageBox(String mensaje){
         Toast.makeText(this.getApplicationContext(),mensaje, Toast.LENGTH_SHORT).show();
     }
-
-
 }
