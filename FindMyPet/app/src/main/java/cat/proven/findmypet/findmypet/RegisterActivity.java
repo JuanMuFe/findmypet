@@ -8,6 +8,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import model.OwnerClass;
+import model.UserClass;
+import model.UserModel;
+
 /**
  * Created by Alumne on 30/04/2016.
  */
@@ -36,7 +40,21 @@ public class RegisterActivity extends AppCompatActivity {
         continueButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 //hacer lo que sea
+                register(username.getText().toString(),password.getText().toString(),email.getText().toString(),name.getText().toString(),firstname.getText().toString(),surname.getText().toString(),nif.getText().toString(),birthdate.getText().toString(),phone.getText().toString(),address.getText().toString(),1);
             }
         });
+
+
     }
+
+    private void register(String username, String password, String email, String name, String firstname, String surname, String nif, String birthdate, String phone, String address,int idCityProvince) {
+
+        UserClass u = new UserClass(2, username, password, email,1);
+        OwnerClass o = new OwnerClass( name,  firstname,  surname,  nif,  birthdate,  phone, address, idCityProvince);
+
+        UserModel uModel = new UserModel();
+        uModel.register(u,o);
+    }
+
+
 }

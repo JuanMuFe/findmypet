@@ -1,6 +1,8 @@
 package cat.proven.findmypet.findmypet;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -18,6 +20,8 @@ import model.UserModel;
 public class LoginActivity extends AppCompatActivity {
     Button loginButton, registerButton;
     EditText usuariText, passwordText;
+    SharedPreferences sharedpreferences;
+    Intent in;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,17 +32,19 @@ public class LoginActivity extends AppCompatActivity {
         registerButton= (Button)findViewById(R.id.registerButton);
         usuariText = (EditText)findViewById(R.id.usuariEditText);
         passwordText = (EditText)findViewById(R.id.passwordEditText);
+        sharedpreferences = getSharedPreferences("sharedPreferences", MODE_PRIVATE);
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 loginUser(usuariText.getText().toString(), passwordText.getText().toString());
+
             }
         });
 
         registerButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
             //iniciar la actividad para enseñar el formulario de registro
-            cridaActivityRegister();
+                cridaActivityRegister();
             setContentView(R.layout.register_layout);
             }
         });
@@ -51,6 +57,12 @@ public class LoginActivity extends AppCompatActivity {
 
         if(res == 1){
             messageBox("Este usuario SI existe!");
+            SharedPreferences.Editor editor = sharedpreferences.edit();
+            editor.putString("userName", usuariText.getText().toString());
+            editor.commit();
+
+            in = new Intent(LoginActivity.this,MainActivity.class);
+            startActivity(in);
         }else{
             messageBox("Este usuario NO existe!");
         }

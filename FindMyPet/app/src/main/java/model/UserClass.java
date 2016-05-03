@@ -36,6 +36,15 @@ public class UserClass {
         this.image = image;
     }
 
+    public UserClass(int idProfile, String userName, String password, String email,int active) {
+        this.idProfile = idProfile;
+        this.userName = userName;
+        this.password = password;
+        this.email = email;
+        this.active = active;
+
+    }
+
     public int getId() {
         return id;
     }

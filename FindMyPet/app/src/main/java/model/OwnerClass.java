@@ -1,5 +1,8 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class OwnerClass {
     private int id;
     private int idUser;
@@ -14,6 +17,7 @@ public class OwnerClass {
     private String entryDate;
     private String dropOutDate;
     private int idCityProvince;
+    private UserClass user;
 
     public OwnerClass() {
     }
@@ -33,6 +37,18 @@ public class OwnerClass {
         this.idCityProvince = idCityProvince;
     }
 
+    public OwnerClass(String name, String firstname, String surname, String nif, String birthdate, String phoneNumber, String address, int idCityProvince)
+    {
+        this.name = name;
+        this.firstname = firstname;
+        this.surname = surname;
+        this.nif = nif;
+        this.birthdate = birthdate;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.idCityProvince = idCityProvince;
+    }
+
     public OwnerClass(int id, int idUser, String name, String firstname, String surname, String nif, String birthdate, String registerDate, String phoneNumber, String address, String entryDate, String dropOutDate, int idCityProvince) {
         this.id = id;
         this.idUser = idUser;
@@ -48,6 +64,23 @@ public class OwnerClass {
         this.dropOutDate = dropOutDate;
         this.idCityProvince = idCityProvince;
     }
+
+    public OwnerClass( UserClass user, String name, String firstname, String surname, String nif, String birthdate, String registerDate, String phoneNumber, String address, String entryDate, String dropOutDate, int idCityProvince) {
+        this.id = id;
+        this.user = user;
+        this.name = name;
+        this.firstname = firstname;
+        this.surname = surname;
+        this.nif = nif;
+        this.birthdate = birthdate;
+        this.registerDate = registerDate;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.entryDate = entryDate;
+        this.dropOutDate = dropOutDate;
+        this.idCityProvince = idCityProvince;
+    }
+
 
     public int getId() {
         return id;
