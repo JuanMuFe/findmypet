@@ -49,6 +49,9 @@ public class OwnerClass {
         this.idCityProvince = idCityProvince;
     }
 
+
+
+
     public OwnerClass(int id, int idUser, String name, String firstname, String surname, String nif, String birthdate, String registerDate, String phoneNumber, String address, String entryDate, String dropOutDate, int idCityProvince) {
         this.id = id;
         this.idUser = idUser;

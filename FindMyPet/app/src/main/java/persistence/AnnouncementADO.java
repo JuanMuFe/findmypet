@@ -22,7 +22,7 @@ public class AnnouncementADO {
 
     public AnnouncementADO(){ }
 
-    public List<AnnouncementClass> getProvinces(){
+    public List<AnnouncementClass> getAnnouncements(){
         int i = 1;
         List<AnnouncementClass> announcementList = new ArrayList<>();
         AnnouncementClass announcement=null;

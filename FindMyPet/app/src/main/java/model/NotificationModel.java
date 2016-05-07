@@ -8,10 +8,10 @@ import persistence.UserNotificationADO;
  */
 public class NotificationModel {
 
-    public void setNotificationAsReaded(NotificationClass n)
+    public void setNotificationAsReaded(UserNotificationClass n)
     {
         UserNotificationADO nADO = new UserNotificationADO();
-       // nADO.setNotificationAsReaded(n);
+        nADO.setNotificationAsReaded(n);
 
     }
 

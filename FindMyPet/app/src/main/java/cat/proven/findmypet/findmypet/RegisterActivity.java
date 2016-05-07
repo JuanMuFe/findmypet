@@ -1,5 +1,7 @@
 package cat.proven.findmypet.findmypet;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -8,8 +10,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.BufferedReader;
@@ -30,6 +34,8 @@ public class RegisterActivity extends AppCompatActivity {
     EditText name, firstname, surname, nif, birthdate, phone, address, username, email, password;
     Spinner country;
     Button continueButton;
+    int result = 0;
+    Intent in;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +54,7 @@ public class RegisterActivity extends AppCompatActivity {
         password = (EditText)findViewById(R.id.passwordEditText);
         continueButton = (Button)findViewById(R.id.continueButton);
 
+
         continueButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 //hacer lo que sea
@@ -60,32 +67,31 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void register(String username, String password, String email, String name, String firstname, String surname, String nif, String birthdate, String phone, String address,int idCityProvince) {
 
-        UserClass u = new UserClass(2, username, password, email,1);
-        OwnerClass o = new OwnerClass( name,  firstname,  surname,  nif,  birthdate,  phone, address, idCityProvince);
 
-        UserModel uModel = new UserModel();
-        uModel.register(u,o);
+        new HttpRequestTask().execute(String.valueOf(2), username, password, email,String.valueOf(1),name,  firstname,  surname,  nif,  birthdate,  phone, address, String.valueOf(idCityProvince));
 
-        new HttpRequestTask().execute();
+
     }
 
-    private class HttpRequestTask extends AsyncTask<String, String, UserClass> {
+    private void messageBox(String mensaje){
+        Toast.makeText(this.getApplicationContext(),mensaje, Toast.LENGTH_SHORT).show();
+    }
 
-        UserClass usr=null;
+    private class HttpRequestTask extends AsyncTask<String, String, Integer> {
 
         @Override
-        protected UserClass doInBackground(String... params) {
+        protected Integer doInBackground(String... params) {
 
-            UserClass u = new UserClass(params[0], params[1]);
+            UserClass u = new UserClass(2,params[0], params[1],params[2],1);
+            OwnerClass o = new OwnerClass(params[3],params[4],params[5],params[6],params[7],params[8],params[8],Integer.parseInt(params[10]));
 
-            String urlString = "http://localhost:8080/RestFulFindMyPet/restful/users/login/";
 
-            String urlResult = urlString + u.getUserName() + "/" + u.getPassword();
+            String urlString = "http://192.168.27.27:8080/RestFulFindMyPet/restful/users/register/";
+
+            String urlResult = urlString + u.getUserName() + "/" + u.getPassword() +"/"+ u.getEmail()+"/"+o.getName()+"/"+o.getFirstname()+"/"+o.getSurname()+"/"+o.getNif()+"/"+o.getBirthdate()+"/"+o.getPhoneNumber()+"/"+o.getAddress()+"/"+o.getIdCityProvince();
             URL url = null;
 
-
             //http://localhost:8080/RestFulFindMyPet/restful/users/login/admin/admin
-
 
             try {
                 url = new URL(urlResult);
@@ -105,17 +111,14 @@ public class RegisterActivity extends AppCompatActivity {
 
                 String response = getResponseBody(con);
 
-                com.google.gson.JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+                JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
 
-                usr = new Gson().fromJson(jsonObject.get("user"), UserClass.class);
-
+                result = new Gson().fromJson(jsonObject.get("register"), Integer.class);
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return usr;
-
-
+            return result;
         }
 
         private String getResponseBody(HttpURLConnection con) throws IOException {
@@ -141,7 +144,23 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
 
+        @Override
+        protected void onPostExecute(Integer resultQ) {
+            if(result==1)
+            {
+                messageBox("User registered correctly");
+                redirectAfterRegister();
+            }else messageBox("Error inserting user");
+
+        }
+
+
     }
 
+    private void redirectAfterRegister() {
 
+            in = new Intent(RegisterActivity.this,LoginActivity.class);
+            startActivity(in);
+            this.finish();
+    }
 }
