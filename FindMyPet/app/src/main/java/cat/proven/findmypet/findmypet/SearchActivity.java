@@ -10,19 +10,37 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.acl.Owner;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
+
+import model.AnnouncementClass;
 import model.OwnerClass;
 import model.UserClass;
 import model.UserModel;
@@ -33,7 +51,7 @@ import model.UserModel;
 public class SearchActivity extends AppCompatActivity {
     Button searchButton;
     EditText usuariEditText;
-    List<Owner> owners;
+    List<OwnerClass> owners = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,79 +85,132 @@ public class SearchActivity extends AppCompatActivity {
         Toast.makeText(this.getApplicationContext(),mensaje, Toast.LENGTH_SHORT).show();
     }
 
-    private class HttpRequestTask extends AsyncTask<String, String, List<Owner>> {
+    private class HttpRequestTask extends AsyncTask<String, String, List<OwnerClass>> {
 
         UserClass usr = null;
 
         @Override
-        protected List<Owner> doInBackground(String... params) {
+        protected List<OwnerClass> doInBackground(String... params) {
 
 
-            String urlString = "http://192.168.27.27:8080/RestFulFindMyPet/restful/users/search/";
 
-            String urlResult = urlString + params[0];
+
+            String response = "";
             URL url = null;
-
-            //http://192.168.27.27:8080/RestFulFindMyPet/restful/users/search/admin
+            String urlString="http://localhost:8080/RestFulFindMyPet/restful/users/search/";
 
             try {
-                url = new URL(urlResult);
+                url = new URL(urlString);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
 
-            //L'objecte HttpUrlConnection ens permet manipular una connexió HTTP.
-
-
-            HttpURLConnection con = null;
-
+            HttpURLConnection conn = null;
             try {
-                con = (HttpURLConnection) url.openConnection();
-                con.setRequestMethod("GET");
-                con.connect();
+                conn = (HttpURLConnection) url.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(15000);
+            try {
+                conn.setRequestMethod("POST");
+            } catch (ProtocolException e) {
+                e.printStackTrace();
+            }
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
 
-                String response = getResponseBody(con);
+            HashMap<String, String> postDataParams = new HashMap<String, String>();
+            postDataParams.put("toSearch", params[0]);
 
-                JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+            OutputStream os = null;
+            try {
+                os = conn.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            BufferedWriter writer = null;
+            try {
+                writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                writer.write(getPostDataString(postDataParams));
 
-                owners = new Gson().fromJson(jsonObject.get("owners"),  new TypeToken<List<List<String>>>() {}.getType());
-
+                writer.flush();
+                writer.close();
+                os.close();
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            int responseCode= 0;
+            try {
+                responseCode = conn.getResponseCode();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            if (responseCode == HttpsURLConnection.HTTP_OK) {
+                String line;
+                BufferedReader br= null;
+                try {
+                    br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    while ((line=br.readLine()) != null) {
+                        response+=line;
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+            else {
+                response="";
+
+            }
+            JsonArray jArray = null;
+            JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+            jArray = jsonObject.getAsJsonArray("owners");
+            OwnerClass own=null;
+
+            for (int i = 0; i < jArray.size(); i++) {
+                JsonElement q = jArray.get(i);
+                own = new Gson().fromJson(q, OwnerClass.class);
+                owners.add(own);
+            }
+
             return owners;
         }
 
-        private String getResponseBody(HttpURLConnection con) throws IOException {
-            BufferedReader br;
+        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
+            StringBuilder result = new StringBuilder();
+            boolean first = true;
+            for(Map.Entry<String, String> entry : params.entrySet()){
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
 
-            if (con.getResponseCode() >= 400) {
-                //Si el codi de resposta és superior a 400 s'ha produit un error i cal llegir
-                //el missatge d'ErrorStream().
-                br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
-
-            } else {
-                //Si el codi és inferior a 400 llavors obtenim una resposta correcte del servidor.
-                br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
             }
 
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-            br.close();
-            return sb.toString();
+            return result.toString();
         }
 
 
+
         @Override
-        protected void onPostExecute(List<Owner> owners) {
+        protected void onPostExecute(List<OwnerClass> owners) {
             if(owners.size()>0)
             {
                 //rellena la lista Juan, por favor
-            }else messageBox("User not found");
+            }else messageBox("Owner not found");
 
         }
 

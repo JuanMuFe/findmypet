@@ -1,0 +1,41 @@
+ UserClass u = new UserClass(params[0], params[1]);
+
+            String urlString = "http://192.168.27.27:8080/RestFulFindMyPet/restful/users/login/";
+
+            String passwordEncrypted = encrypt(u.getPassword());
+            u.setPassword(passwordEncrypted);
+
+            String urlResult = urlString + u.getUserName() + "/" + passwordEncrypted;
+            URL url = null;
+
+
+            //http://localhost:8080/RestFulFindMyPet/restful/users/login/admin/admin
+
+
+            try {
+                url = new URL(urlResult);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+            //L'objecte HttpUrlConnection ens permet manipular una connexió HTTP.
+
+
+            HttpURLConnection con = null;
+
+            try {
+                con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("GET");
+                con.connect();
+
+                String response = getResponseBody(con);
+
+                JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+
+                usr = new Gson().fromJson(jsonObject.get("user"), UserClass.class);
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return usr;

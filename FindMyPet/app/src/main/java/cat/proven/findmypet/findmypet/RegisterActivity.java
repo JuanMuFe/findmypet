@@ -16,12 +16,30 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import model.OwnerClass;
 import model.UserClass;
@@ -57,7 +75,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         continueButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                //hacer lo que sea
+
                 register(username.getText().toString(),password.getText().toString(),email.getText().toString(),name.getText().toString(),firstname.getText().toString(),surname.getText().toString(),nif.getText().toString(),birthdate.getText().toString(),phone.getText().toString(),address.getText().toString(),1);
             }
         });
@@ -77,48 +95,151 @@ public class RegisterActivity extends AppCompatActivity {
         Toast.makeText(this.getApplicationContext(),mensaje, Toast.LENGTH_SHORT).show();
     }
 
+    private String encrypt(String password)
+    {
+        MessageDigest md=null;
+        String passwordmd5="";
+
+        try {
+            md = MessageDigest.getInstance("MD5");
+            md.update(password.getBytes());
+            byte byteData[] = md.digest();
+
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < byteData.length; i++) {
+                sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+            }
+            passwordmd5 = sb.toString();
+
+        }catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        return passwordmd5;
+    }
+
     private class HttpRequestTask extends AsyncTask<String, String, Integer> {
 
         @Override
         protected Integer doInBackground(String... params) {
 
-            UserClass u = new UserClass(2,params[0], params[1],params[2],1);
-            OwnerClass o = new OwnerClass(params[3],params[4],params[5],params[6],params[7],params[8],params[8],Integer.parseInt(params[10]));
+            UserClass u = new UserClass(Integer.parseInt(params[0]),params[1], params[2],params[3],1);
+            OwnerClass o = new OwnerClass(params[5],params[6],params[7],params[8],params[9],params[10],params[11],2);
 
 
-            String urlString = "http://192.168.27.27:8080/RestFulFindMyPet/restful/users/register/";
+//            String urlString = "http://192.168.27.27:8080/RestFulFindMyPet/restful/users/register/";
 
-            String urlResult = urlString + u.getUserName() + "/" + u.getPassword() +"/"+ u.getEmail()+"/"+o.getName()+"/"+o.getFirstname()+"/"+o.getSurname()+"/"+o.getNif()+"/"+o.getBirthdate()+"/"+o.getPhoneNumber()+"/"+o.getAddress()+"/"+o.getIdCityProvince();
+            String passEncrypted = encrypt(u.getPassword());
+            u.setPassword(passEncrypted);
+
+           // String urlResult = urlString + u.getUserName() + "/" + passEncrypted +"/"+ u.getEmail()+"/"+o.getName()+"/"+o.getFirstname()+"/"+o.getSurname()+"/"+o.getNif()+"/"+o.getBirthdate()+"/"+o.getPhoneNumber()+"/"+o.getAddress()+"/"+o.getIdCityProvince();
+            String response = "";
             URL url = null;
-
-            //http://localhost:8080/RestFulFindMyPet/restful/users/login/admin/admin
-
             try {
-                url = new URL(urlResult);
+                url = new URL("http://192.168.27.27:8080/RestFulFindMyPet/restful/users/register/");
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
-
-            //L'objecte HttpUrlConnection ens permet manipular una connexió HTTP.
-
-
-            HttpURLConnection con = null;
-
+            HttpURLConnection conn = null;
             try {
-                con = (HttpURLConnection) url.openConnection();
-                con.setRequestMethod("GET");
-                con.connect();
+                conn = (HttpURLConnection) url.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(15000);
+            try {
+                conn.setRequestMethod("POST");
+            } catch (ProtocolException e) {
+                e.printStackTrace();
+            }
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
 
-                String response = getResponseBody(con);
+            HashMap<String, String> postDataParams = new HashMap<String, String>();
+            postDataParams.put("username", u.getUserName());
+            postDataParams.put("pswd",u.getPassword());
+            postDataParams.put("email",u.getEmail());
+            postDataParams.put("name",o.getName());
+            postDataParams.put("firstname",o.getFirstname());
+            postDataParams.put("surname",o.getSurname());
+            postDataParams.put("nif",o.getNif());
+            postDataParams.put("birthdate",o.getBirthdate());
+            postDataParams.put("phone_number",o.getPhoneNumber());
+            postDataParams.put("address",o.getAddress());
+            postDataParams.put("id_city_province", String.valueOf(o.getIdCityProvince()));
 
-                JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
 
-                result = new Gson().fromJson(jsonObject.get("register"), Integer.class);
+
+            OutputStream os = null;
+            try {
+                os = conn.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            BufferedWriter writer = null;
+            try {
+                writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                writer.write(getPostDataString(postDataParams));
+
+            writer.flush();
+            writer.close();
+            os.close();
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return result;
+
+            int responseCode= 0;
+            try {
+                responseCode = conn.getResponseCode();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            if (responseCode == HttpsURLConnection.HTTP_OK) {
+                String line;
+                BufferedReader br= null;
+                try {
+                    br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    while ((line=br.readLine()) != null) {
+                        response+=line;
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+            else {
+                response="";
+
+            }
+
+
+        return Integer.valueOf(response);
+
+        }
+
+        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
+            StringBuilder result = new StringBuilder();
+            boolean first = true;
+            for(Map.Entry<String, String> entry : params.entrySet()){
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
+
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            }
+
+            return result.toString();
         }
 
         private String getResponseBody(HttpURLConnection con) throws IOException {
@@ -146,7 +267,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Integer resultQ) {
-            if(result==1)
+            if(resultQ==1)
             {
                 messageBox("User registered correctly");
                 redirectAfterRegister();

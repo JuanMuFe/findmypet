@@ -18,20 +18,30 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import model.AnnouncementClass;
+import model.UserClass;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -48,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences userDetails = getSharedPreferences("sharedPreferences", MODE_PRIVATE);
         String userName = userDetails.getString("userName", "");
         int idProfile = userDetails.getInt("profile",0);
+        int id = userDetails.getInt("id",0);
 
         switch(idProfile)
         {
@@ -58,6 +69,19 @@ public class MainActivity extends AppCompatActivity {
             case 2:
                 //user area
                 new HttpRequestTask().execute();
+
+                announcementsView = (ListView)findViewById(R.id.announcementsList);
+                CustomAnnouncementList adapter = new CustomAnnouncementList(MainActivity.this, (ArrayList<AnnouncementClass>) announcements);
+                announcementsView.setAdapter(adapter);
+
+                announcementsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view,
+                                            int position, long id) {
+                        messageBox("Has clickado en "+ announcements.get(position).getIdUser());
+                    }
+
+                });
                 break;
             default:
                 finish();
@@ -71,18 +95,6 @@ public class MainActivity extends AppCompatActivity {
         announcements.add(new AnnouncementClass("He visto un perro abandonado.", "03/04/2016", 3));
         announcements.add(new AnnouncementClass("Esta mañana hace un precioso dia para pasear a tu animal!", "18/01/2015", 3));*/
 
-        announcementsView = (ListView)findViewById(R.id.announcementsList);
-        CustomAnnouncementList adapter = new CustomAnnouncementList(MainActivity.this, (ArrayList<AnnouncementClass>) announcements);
-        announcementsView.setAdapter(adapter);
-
-        announcementsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-                messageBox("Has clickado en "+ announcements.get(position).getIdUser());
-            }
-
-        });
 
 
     }
@@ -154,29 +166,22 @@ public class MainActivity extends AppCompatActivity {
 
     private class HttpRequestTask extends AsyncTask<String, String, List<AnnouncementClass>> {
 
-
-
         @Override
         protected List<AnnouncementClass> doInBackground(String... params) {
 
-
-
-            String urlString = "http://192.168.27.27:8080/RestFulFindMyPet/restful/announcement/getAnnouncements/";
+            String urlString = "http://192.168.27.27:8080/RestFulFindMyPet/restful/announcements/getAnnouncements/";
 
             URL url = null;
 
 
-            //http://localhost:8080/RestFulFindMyPet/restful/users/login/admin/admin
 
+            //http://localhost:8080/RestFulFindMyPet/restful/users/login/admin/admin
 
             try {
                 url = new URL(urlString);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
-
-            //L'objecte HttpUrlConnection ens permet manipular una connexió HTTP.
-
 
             HttpURLConnection con = null;
 
@@ -187,16 +192,24 @@ public class MainActivity extends AppCompatActivity {
 
                 String response = getResponseBody(con);
 
+                JsonArray jArray = null;
                 JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+                jArray = jsonObject.getAsJsonArray("announcements");
+                AnnouncementClass ann=null;
 
-                announcements =  new Gson().fromJson(jsonObject.get("annoucements"), new TypeToken<List<List<String>>>() {}.getType());
-
+                for (int i = 0; i < jArray.size(); i++) {
+                    JsonElement q = jArray.get(i);
+                    ann = new Gson().fromJson(q, AnnouncementClass.class);
+                    announcements.add(ann);
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
             return announcements;
         }
+
+
 
         private String getResponseBody(HttpURLConnection con) throws IOException {
             BufferedReader br;
