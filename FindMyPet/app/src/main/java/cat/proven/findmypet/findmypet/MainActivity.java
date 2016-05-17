@@ -169,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected List<AnnouncementClass> doInBackground(String... params) {
 
-            String urlString = "http://192.168.27.27:8080/RestFulFindMyPet/restful/announcements/getAnnouncements/";
+            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/announcements/getAnnouncements/";
 
             URL url = null;
 

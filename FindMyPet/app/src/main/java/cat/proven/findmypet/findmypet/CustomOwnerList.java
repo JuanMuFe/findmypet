@@ -10,22 +10,21 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import cat.proven.findmypet.findmypet.R;
 import model.AnnouncementClass;
 import model.OwnerClass;
 
 /**
  * Created by Alumne on 03/05/2016.
  */
-public class CustomAnnouncementList extends ArrayAdapter<AnnouncementClass> {
+public class CustomOwnerList extends ArrayAdapter<OwnerClass> {
 
     private final Activity context;
-    private final ArrayList<AnnouncementClass> announcements;
+    private final ArrayList<OwnerClass> owners;
 
-    public CustomAnnouncementList(Activity context, ArrayList<AnnouncementClass> announcements) {
-        super(context, R.layout.announcement_list, announcements);
+    public CustomOwnerList(Activity context, ArrayList<OwnerClass> owners) {
+        super(context, R.layout.owner_list, owners);
         this.context = context;
-        this.announcements = announcements;
+        this.owners = owners;
     }
 
 
@@ -37,8 +36,8 @@ public class CustomAnnouncementList extends ArrayAdapter<AnnouncementClass> {
         TextView date = (TextView) rowView.findViewById(R.id.date);
 
         ImageView imageView = (ImageView) rowView.findViewById(R.id.img);
-        desc.setText(announcements.get(position).getDescription());
-        date.setText(announcements.get(position).getDate());
+        desc.setText(owners.get(position).getName());
+
 
         imageView.setImageResource(R.drawable.user);
         return rowView;

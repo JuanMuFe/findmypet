@@ -9,80 +9,117 @@ package model;/*
  * @author Alumne
  */
 public class ReportClass {
-    private int id;
-    private int idOwner;
-    private int idPet;
-    private String entryDate;
-    private String location;
-    private String extra;
 
-    public ReportClass() {
-    }
+        private int id;
+        private int idOwner;
+        private int idPet;
+        private String entryDate;
+        private String location;
+        private String extra;
+        private int finished;
+        private PetClass pet;
 
-    public ReportClass(int idOwner, int idPet, String entryDate, String location, String extra) {
-        this.idOwner = idOwner;
-        this.idPet = idPet;
-        this.entryDate = entryDate;
-        this.location = location;
-        this.extra = extra;
-    }
+        public ReportClass() {
+        }
 
-    public ReportClass(int id, int idOwner, int idPet, String entryDate, String location, String extra) {
-        this.id = id;
-        this.idOwner = idOwner;
-        this.idPet = idPet;
-        this.entryDate = entryDate;
-        this.location = location;
-        this.extra = extra;
-    }
+        public ReportClass(int id, int idPet, int idOwner, String entryDate, String location, String extra, int finished,PetClass pet) {
+            this.id = id;
+            this.idOwner = idOwner;
+            this.idPet = idPet;
+            this.entryDate = entryDate;
+            this.location = location;
+            this.extra = extra;
+            this.finished = finished;
+            this.pet = pet;
+        }
 
-    public int getId() {
-        return id;
-    }
+        public PetClass getPet() {
+            return pet;
+        }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+        public void setPet(PetClass pet) {
+            this.pet = pet;
+        }
 
-    public int getIdOwner() {
-        return idOwner;
-    }
+        public ReportClass(int idOwner, int idPet, String entryDate, String location, String extra, int finished) {
+            this.idOwner = idOwner;
+            this.idPet = idPet;
+            this.entryDate = entryDate;
+            this.location = location;
+            this.extra = extra;
+            this.finished = finished;
+        }
 
-    public void setIdOwner(int idOwner) {
-        this.idOwner = idOwner;
-    }
+        public ReportClass(int id, int idOwner, int idPet, String entryDate, String location, String extra,int finished) {
+            this.id = id;
+            this.idOwner = idOwner;
+            this.idPet = idPet;
+            this.entryDate = entryDate;
+            this.location = location;
+            this.extra = extra;
+            this.finished = finished;
+        }
 
-    public int getIdPet() {
-        return idPet;
-    }
+        public ReportClass(int id) {
+            this.id = id;
+        }
 
-    public void setIdPet(int idPet) {
-        this.idPet = idPet;
-    }
+        public int getId() {
+            return id;
+        }
 
-    public String getEntryDate() {
-        return entryDate;
-    }
+        public void setId(int id) {
+            this.id = id;
+        }
 
-    public void setEntryDate(String entryDate) {
-        this.entryDate = entryDate;
-    }
+        public int getIdOwner() {
+            return idOwner;
+        }
 
-    public String getLocation() {
-        return location;
-    }
+        public void setIdOwner(int idOwner) {
+            this.idOwner = idOwner;
+        }
 
-    public void setLocation(String location) {
-        this.location = location;
-    }
+        public int getIdPet() {
+            return idPet;
+        }
 
-    public String getExtra() {
+        public void setIdPet(int idPet) {
+            this.idPet = idPet;
+        }
+
+        public String getEntryDate() {
+            return entryDate;
+        }
+
+        public void setEntryDate(String entryDate) {
+            this.entryDate = entryDate;
+        }
+
+        public String getLocation() {
+            return location;
+        }
+
+        public void setLocation(String location) {
+            this.location = location;
+        }
+
+        public String getExtra() {
         return extra;
-    }
+        }
 
-    public void setExtra(String extra) {
-        this.extra = extra;
+        public void setExtra(String extra) {
+            this.extra = extra;
+        }
+
+        public int getFinished() {
+            return finished;
+        }
+
+        public void setExtra(int finished) {
+            this.finished = finished;
+        }
+
+
+
     }
-    
-    
-}

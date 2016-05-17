@@ -13,13 +13,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -38,7 +31,6 @@ import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 
 import model.PetClass;
-import model.PetModel;
 import model.UserClass;
 
 
@@ -178,7 +170,7 @@ public class PetAdministrationActivity extends AppCompatActivity {
         {
             String response = "";
             URL url = null;
-            String urlString="http://localhost:8080/RestFulFindMyPet/restful/pets/modify/";
+            String urlString="http://192.168.27.27:8080/RestFulFindMyPet/restful/pets/modify/";
 
             try {
                 url = new URL(urlString);
@@ -265,7 +257,7 @@ public class PetAdministrationActivity extends AppCompatActivity {
         {
             String response = "";
             URL url = null;
-            String urlString="http://localhost:8080/RestFulFindMyPet/restful/pets/delete/";
+            String urlString="http://192.168.27.27:8080/RestFulFindMyPet/restful/pets/delete/";
 
             try {
                 url = new URL(urlString);
@@ -348,7 +340,7 @@ public class PetAdministrationActivity extends AppCompatActivity {
         {
             String response = "";
             URL url = null;
-            String urlString="http://localhost:8080/RestFulFindMyPet/restful/pets/add/";
+            String urlString="http://192.168.27.27:8080/RestFulFindMyPet/restful/pets/add/";
 
             try {
                 url = new URL(urlString);

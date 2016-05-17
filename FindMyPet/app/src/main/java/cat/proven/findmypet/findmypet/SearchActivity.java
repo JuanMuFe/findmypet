@@ -5,8 +5,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -32,18 +34,15 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.security.acl.Owner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.net.ssl.HttpsURLConnection;
 
 import model.AnnouncementClass;
 import model.OwnerClass;
 import model.UserClass;
-import model.UserModel;
 
 /**
  * Created by Alumne on 30/04/2016.
@@ -52,6 +51,7 @@ public class SearchActivity extends AppCompatActivity {
     Button searchButton;
     EditText usuariEditText;
     List<OwnerClass> owners = new ArrayList<>();
+    ListView ownersView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +73,20 @@ public class SearchActivity extends AppCompatActivity {
 
     private void searchUser(String text) {
         new HttpRequestTask().execute(text);
+
+        ownersView = (ListView)findViewById(R.id.ownersList);
+        CustomOwnerList adapter = new CustomOwnerList(SearchActivity.this, (ArrayList<OwnerClass>) owners);
+        ownersView.setAdapter(adapter);
+
+        ownersView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                messageBox("Has clickado en "+ owners.get(position).getIdUser());
+            }
+
+        });
+
     }
 
     public void cridaActivityRegister(){
@@ -92,12 +106,9 @@ public class SearchActivity extends AppCompatActivity {
         @Override
         protected List<OwnerClass> doInBackground(String... params) {
 
-
-
-
             String response = "";
             URL url = null;
-            String urlString="http://localhost:8080/RestFulFindMyPet/restful/users/search/";
+            String urlString="http://192.168.27.27:8080/RestFulFindMyPet/restful/users/search/";
 
             try {
                 url = new URL(urlString);
