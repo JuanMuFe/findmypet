@@ -1,5 +1,8 @@
 package cat.proven.findmypet.findmypet;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -29,18 +32,30 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import model.AnnouncementClass;
+import model.NotificationClass;
+import model.OwnerClass;
 import model.UserClass;
 
 
@@ -48,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences sharedpreferences;
     ListView announcementsView;
     List<AnnouncementClass> announcements = new ArrayList<AnnouncementClass>();
+    List<NotificationClass> notifications = new ArrayList<NotificationClass>();
 
 
     @Override
@@ -59,6 +75,8 @@ public class MainActivity extends AppCompatActivity {
         String userName = userDetails.getString("userName", "");
         int idProfile = userDetails.getInt("profile",0);
         int id = userDetails.getInt("id",0);
+
+        new getNotifications().execute(String.valueOf(id));
 
         switch(idProfile)
         {
@@ -173,10 +191,6 @@ public class MainActivity extends AppCompatActivity {
 
             URL url = null;
 
-
-
-            //http://localhost:8080/RestFulFindMyPet/restful/users/login/admin/admin
-
             try {
                 url = new URL(urlString);
             } catch (MalformedURLException e) {
@@ -238,6 +252,162 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(List<AnnouncementClass> announcements) {
 
 
+        }
+
+
+    }
+
+    public void createNotification(List<NotificationClass> notifications) {
+
+        for(NotificationClass n :notifications)
+        {
+            // Prepare intent which is triggered if the
+            // notification is selected
+            Intent intent = new Intent(this, NotificationReceiverActivity.class);
+            intent.putExtra("id_report", n.getId_report());
+            PendingIntent pIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
+
+            // Build notification
+            // Actions are just fake
+            Notification noti = new Notification.Builder(this)
+                    .setContentTitle("New notification from findmypet")
+                    .setContentText(n.getDescription()).setSmallIcon(R.drawable.ic_cast_disabled_light)
+                    .setContentIntent(pIntent)
+                    .addAction(R.drawable.ic_cast_disabled_light, "Call", pIntent)
+                    .addAction(R.drawable.ic_cast_disabled_light, "More", pIntent)
+                    .addAction(R.drawable.ic_cast_disabled_light, "And more", pIntent).build();
+            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            // hide the notification after its selected
+            noti.flags |= Notification.FLAG_AUTO_CANCEL;
+
+            notificationManager.notify(0, noti);
+        }
+
+
+    }
+
+    private class getNotifications extends AsyncTask<String, String, List<NotificationClass>> {
+
+        @Override
+        protected List<NotificationClass> doInBackground(String... params) {
+
+            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/notifications/getUserNotifications/";
+            URL url=  null;
+            try {
+                url = new URL(urlString);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            String response = "";
+            HttpURLConnection conn = null;
+            try {
+                conn = (HttpURLConnection) url.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(15000);
+            try {
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Accept-Encoding", "");
+            } catch (ProtocolException e) {
+                e.printStackTrace();
+            }
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+
+
+            HashMap<String, String> postDataParams = new HashMap<String, String>();
+            postDataParams.put("id_user", String.valueOf(params[0]));
+
+            OutputStream os = null;
+            try {
+                os = conn.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            BufferedWriter writer = null;
+            try {
+                writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                writer.write(getPostDataString(postDataParams));
+
+                writer.flush();
+                writer.close();
+                os.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            int responseCode= 0;
+            try {
+                responseCode = conn.getResponseCode();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            if (responseCode == HttpsURLConnection.HTTP_OK) {
+                String line;
+                BufferedReader br= null;
+                try {
+                    br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    while ((line=br.readLine()) != null) {
+                        response+=line;
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+            else {
+                response="";
+
+            }
+
+            JsonArray jArray = null;
+            JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+            jArray = jsonObject.getAsJsonArray("owners");
+            NotificationClass noti=null;
+
+            for (int i = 0; i < jArray.size(); i++) {
+                JsonElement q = jArray.get(i);
+                noti = new Gson().fromJson(q, NotificationClass.class);
+                notifications.add(noti);
+            }
+
+
+            return notifications;
+        }
+
+
+
+        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
+            StringBuilder result = new StringBuilder();
+            boolean first = true;
+            for(Map.Entry<String, String> entry : params.entrySet()){
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
+
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            }
+
+            return result.toString();
+        }
+
+
+        @Override
+        protected void onPostExecute(List<NotificationClass> notifications) {
+
+            createNotification(notifications);
         }
 
 
