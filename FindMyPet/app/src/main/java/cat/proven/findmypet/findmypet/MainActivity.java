@@ -3,6 +3,9 @@ package cat.proven.findmypet.findmypet;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,11 +14,15 @@ import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -64,6 +71,11 @@ public class MainActivity extends AppCompatActivity {
     ListView announcementsView;
     List<AnnouncementClass> announcements = new ArrayList<AnnouncementClass>();
     List<NotificationClass> notifications = new ArrayList<NotificationClass>();
+    private Activity activity;
+    private Context context = this;
+    public int id_user;
+    public String announcementDescription;
+    Button addAnnouncementButton;
 
 
     @Override
@@ -71,12 +83,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_layout);
 
+addAnnouncementButton = (Button)findViewById(R.id.addAnnouncementButton);
         SharedPreferences userDetails = getSharedPreferences("sharedPreferences", MODE_PRIVATE);
         String userName = userDetails.getString("userName", "");
-        int idProfile = userDetails.getInt("profile",0);
-        int id = userDetails.getInt("id",0);
+        int idProfile = userDetails.getInt("profile",2);
+        int id = userDetails.getInt("id",4);
 
         new getNotifications().execute(String.valueOf(id));
+   addAnnouncementButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                createModal();
+            }
+        });
+
 
         switch(idProfile)
         {
@@ -88,39 +107,100 @@ public class MainActivity extends AppCompatActivity {
                 //user area
                 new HttpRequestTask().execute();
 
-                announcementsView = (ListView)findViewById(R.id.announcementsList);
-                CustomAnnouncementList adapter = new CustomAnnouncementList(MainActivity.this, (ArrayList<AnnouncementClass>) announcements);
-                announcementsView.setAdapter(adapter);
 
-                announcementsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view,
-                                            int position, long id) {
-                        messageBox("Has clickado en "+ announcements.get(position).getIdUser());
-                    }
 
-                });
+                    announcementsView = (ListView) findViewById(R.id.announcementsList);
+                    CustomAnnouncementList adapter = new CustomAnnouncementList(MainActivity.this, (ArrayList<AnnouncementClass>) announcements);
+                    announcementsView.setAdapter(adapter);
+
+                    announcementsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view,
+                                                int position, long id) {
+                           final int id_user_post = announcements.get(position).getIdUser();
+                        createAndShowModal(id_user_post);
+                        }
+
+                    });
+
                 break;
             default:
+
                 finish();
             break;
         }
 
-
-
-
-       /* announcements.add(new AnnouncementClass("He encontrado una fantastica protectora de animales!", "01/05/2016", 2));
-        announcements.add(new AnnouncementClass("He visto un perro abandonado.", "03/04/2016", 3));
-        announcements.add(new AnnouncementClass("Esta mañana hace un precioso dia para pasear a tu animal!", "18/01/2015", 3));*/
-
-
-
     }
+    public void createModal(){
+        final Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.add_announcement_layout);
+        dialog.setTitle("Add Announcement");
+
+        final EditText writed = (EditText)dialog.findViewById(R.id.editTextDialog);
+
+        Button dialogOkButton = (Button) dialog.findViewById(R.id.buttonOKDialog);
+        Button dialogCancelButton = (Button) dialog.findViewById(R.id.buttonCloseDialog);
+
+        dialogCancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialogOkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                announcementDescription = writed.getText().toString();
+                if(announcementDescription != ""){
+                    new addAnnouncement().execute(announcementDescription, String.valueOf(id_user));
+                }
+                dialog.dismiss();
+
+            }
+        });
+
+        dialog.show();
+    }
+
+    public void createAndShowModal(final int id_user_post) {
+        final Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.add_announcement_layout);
+        dialog.setTitle("Add Announcement Response");
+
+        ImageView image = (ImageView)dialog.findViewById(R.id.imageDialog);
+        final EditText writed = (EditText)dialog.findViewById(R.id.editTextDialog);
+
+        Button dialogOkButton = (Button) dialog.findViewById(R.id.buttonOKDialog);
+        Button dialogCancelButton = (Button) dialog.findViewById(R.id.buttonCloseDialog);
+
+        dialogCancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialogOkButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                announcementDescription = writed.getText().toString();
+                if(announcementDescription != ""){
+                    new addResponseAnnouncement().execute(announcementDescription,String.valueOf(id_user_post), String.valueOf(id_user));
+                }
+                dialog.dismiss();
+
+            }
+        });
+
+        dialog.show();
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
-        menu.add(0, Menu.FIRST,   Menu.NONE, "Profile").setIcon(getResources().getDrawable(R.drawable.profile));
+        menu.add(0, Menu.FIRST,   Menu.NONE, "Profile").setIcon(R.drawable.profile);
         menu.add(0, Menu.FIRST+1, Menu.NONE, "Report pet").setIcon(R.drawable.report);
         menu.add(0, Menu.FIRST+2, Menu.NONE, "Settings").setIcon(R.drawable.setting);
         menu.add(0, Menu.FIRST+3, Menu.NONE, "Logout").setIcon(R.drawable.logout);
@@ -130,15 +210,18 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent =null;
         switch(item.getItemId()){
             case 1:
-                Intent intent = new Intent(this, ProfileActivity.class);
+                intent = new Intent(this, ProfileActivity.class);
                 startActivity(intent);
                 this.finish();
                 break;
 
             case 2:
-                messageBox("Report");
+                intent = new Intent(this, MapsActivity.class);
+                startActivity(intent);
+                this.finish();
                 break;
 
             case 3:
@@ -182,6 +265,10 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this.getApplicationContext(),mensaje, Toast.LENGTH_SHORT).show();
     }
 
+    public Activity getActivity() {
+        return activity;
+    }
+
     private class HttpRequestTask extends AsyncTask<String, String, List<AnnouncementClass>> {
 
         @Override
@@ -191,6 +278,7 @@ public class MainActivity extends AppCompatActivity {
 
             URL url = null;
 
+ //http://localhost:8080/RestFulFindMyPet/restful/users/login/admin/admin
             try {
                 url = new URL(urlString);
             } catch (MalformedURLException e) {
@@ -258,13 +346,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void createNotification(List<NotificationClass> notifications) {
+        int i=0;
 
         for(NotificationClass n :notifications)
         {
             // Prepare intent which is triggered if the
             // notification is selected
             Intent intent = new Intent(this, NotificationReceiverActivity.class);
-            intent.putExtra("id_report", n.getId_report());
+            intent.putExtra("idreport", String.valueOf(n.getId_report()));
             PendingIntent pIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
 
             // Build notification
@@ -280,7 +369,8 @@ public class MainActivity extends AppCompatActivity {
             // hide the notification after its selected
             noti.flags |= Notification.FLAG_AUTO_CANCEL;
 
-            notificationManager.notify(0, noti);
+            notificationManager.notify(i, noti);
+            i++;
         }
 
 
@@ -371,13 +461,15 @@ public class MainActivity extends AppCompatActivity {
 
             JsonArray jArray = null;
             JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
-            jArray = jsonObject.getAsJsonArray("owners");
+            jArray = jsonObject.getAsJsonArray("userNotifications");
             NotificationClass noti=null;
 
-            for (int i = 0; i < jArray.size(); i++) {
-                JsonElement q = jArray.get(i);
-                noti = new Gson().fromJson(q, NotificationClass.class);
-                notifications.add(noti);
+            if(jArray.size()>0) {
+                for (int i = 0; i < jArray.size(); i++) {
+                    JsonElement q = jArray.get(i);
+                    noti = new Gson().fromJson(q, NotificationClass.class);
+                    notifications.add(noti);
+                }
             }
 
 
@@ -407,9 +499,246 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(List<NotificationClass> notifications) {
 
-            createNotification(notifications);
+            if (notifications.size() > 0) {
+                createNotification(notifications);
+
+            }
         }
 
-
     }
+
+
+private class addAnnouncement extends AsyncTask<String, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(String... params) {
+
+            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/announcements/add/";
+            String description = params[0];
+            String id_user = params[1];
+
+            URL url = null;
+
+            try {
+                url = new URL(urlString);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            String response = "";
+            HttpURLConnection conn = null;
+            try {
+                conn = (HttpURLConnection) url.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(15000);
+            try {
+                conn.setRequestMethod("POST");
+
+            } catch (ProtocolException e) {
+                e.printStackTrace();
+            }
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+
+
+            HashMap<String, String> postDataParams = new HashMap<String, String>();
+            postDataParams.put("description", description);
+            postDataParams.put("id_user", id_user);
+
+            OutputStream os = null;
+            try {
+                os = conn.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            BufferedWriter writer = null;
+            try {
+                writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                writer.write(getPostDataString(postDataParams));
+
+                writer.flush();
+                writer.close();
+                os.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            int responseCode= 0;
+            try {
+                responseCode = conn.getResponseCode();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            if (responseCode == HttpsURLConnection.HTTP_OK) {
+                String line;
+                BufferedReader br= null;
+                try {
+                    br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    while ((line=br.readLine()) != null) {
+                        response+=line;
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+            else {
+                response="";
+            }
+
+            return Integer.valueOf(response);
+        }
+
+        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
+            StringBuilder result = new StringBuilder();
+            boolean first = true;
+            for(Map.Entry<String, String> entry : params.entrySet()){
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
+
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            }
+
+            return result.toString();
+        }
+
+        @Override
+        protected void onPostExecute(Integer resultQ) {
+            if(resultQ > 0){
+                messageBox("Announcement added correctly.");
+            }else{ messageBox("Some error occured adding the announcement."); }
+
+
+        }
+    }
+
+  private class addResponseAnnouncement extends AsyncTask<String, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(String... params) {
+
+            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/announcements/add/";
+            String description = params[0];
+            String id_user_post = params[1];
+            String id_user = params[2];
+
+            URL url = null;
+
+            try {
+                url = new URL(urlString);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            String response = "";
+            HttpURLConnection conn = null;
+            try {
+                conn = (HttpURLConnection) url.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(15000);
+            try {
+                conn.setRequestMethod("POST");
+            } catch (ProtocolException e) {
+                e.printStackTrace();
+            }
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+
+            HashMap<String, String> postDataParams = new HashMap<String, String>();
+            postDataParams.put("description", description);
+            postDataParams.put("id_user", id_user);
+            postDataParams.put("id_foreign_user", id_user_post);
+
+
+            OutputStream os = null;
+            try {
+                os = conn.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            BufferedWriter writer = null;
+            try {
+                writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                writer.write(getPostDataString(postDataParams));
+
+                writer.flush();
+                writer.close();
+                os.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            int responseCode= 0;
+            try {
+                responseCode = conn.getResponseCode();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            if (responseCode == HttpsURLConnection.HTTP_OK) {
+                String line;
+                BufferedReader br= null;
+                try {
+                    br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    while ((line=br.readLine()) != null) {
+                        response+=line;
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+            else {
+                response="";
+            }
+
+            return Integer.valueOf(response);
+        }
+        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
+            StringBuilder result = new StringBuilder();
+            boolean first = true;
+            for(Map.Entry<String, String> entry : params.entrySet()){
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
+
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            }
+
+            return result.toString();
+        }
+
+        @Override
+        protected void onPostExecute(Integer resultQ) {
+            if(resultQ > 0){
+                messageBox("Announcement response added correctly.");
+            }else{ messageBox("Some error occured adding the response."); }
+
+
+        }
+    }
+
 }

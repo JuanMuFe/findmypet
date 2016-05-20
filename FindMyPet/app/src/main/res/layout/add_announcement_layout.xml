@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+ <!--https://developer.android.com/guide/topics/ui/dialogs.html-->
+    <ImageView
+        android:src="@drawable/response32"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_gravity="left"
+        android:id="@+id/imageDialog"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:hint="Write here the announcement."
+        android:id="@+id/editTextDialog"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/buttonOKDialog"
+        android:text="Post"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/buttonCloseDialog"
+        android:text="Cancel"/>
+</LinearLayout>

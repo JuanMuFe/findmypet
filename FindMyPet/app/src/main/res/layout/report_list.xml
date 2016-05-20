@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp">
+
+        <TableRow android:layout_marginTop="10dp">
+            <TextView
+                android:id="@+id/pet"
+                android:layout_width="280dp"
+                android:layout_height="match_parent" />
+
+            <TextView
+                android:id="@+id/location"
+                android:layout_width="280dp"
+                android:layout_height="match_parent" />
+
+            <TextView
+                android:id="@+id/extra"
+                android:layout_width="280dp"
+                android:layout_height="match_parent" />
+
+            <TextView
+                android:id="@+id/date"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textColor="@color/grey"
+                android:textSize="10dp"
+                android:gravity="bottom"
+                android:layout_marginLeft="-50dp"/>
+
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>

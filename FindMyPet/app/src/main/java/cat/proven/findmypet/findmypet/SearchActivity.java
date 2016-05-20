@@ -108,7 +108,7 @@ public class SearchActivity extends AppCompatActivity {
 
             String response = "";
             URL url = null;
-            String urlString="http://192.168.27.27:8080/RestFulFindMyPet/restful/users/search/";
+            String urlString="http://provenapps.cat:8080/RestFulFindMyPet/restful/users/search/";
 
             try {
                 url = new URL(urlString);

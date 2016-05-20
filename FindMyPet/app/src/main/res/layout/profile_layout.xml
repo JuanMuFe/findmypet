@@ -25,7 +25,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Basic Data"
-        android:id="@+id/button"
+        android:id="@+id/modifyButton"
         android:width="170dp"
         android:layout_below="@+id/profileImg"
         android:layout_alignParentStart="true" />
@@ -36,7 +36,7 @@
         android:text="Reports"
         android:id="@+id/button2"
         android:width="170dp"
-        android:layout_alignTop="@+id/button"
+        android:layout_alignTop="@+id/modifyButton"
         android:layout_alignParentEnd="true" />
 
     <LinearLayout
@@ -44,11 +44,14 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/button"
+        android:layout_below="@+id/modifyButton"
         android:layout_alignParentStart="true"
         android:layout_marginTop="28dp">
 
-
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/resAnnouncementsList" />
     </LinearLayout>
 
 </RelativeLayout>

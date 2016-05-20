@@ -1,7 +1,5 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class OwnerClass {
     private int id;
@@ -39,6 +37,19 @@ public class OwnerClass {
 
     public OwnerClass(String name, String firstname, String surname, String nif, String birthdate, String phoneNumber, String address, int idCityProvince)
     {
+        this.name = name;
+        this.firstname = firstname;
+        this.surname = surname;
+        this.nif = nif;
+        this.birthdate = birthdate;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.idCityProvince = idCityProvince;
+    }
+
+    public OwnerClass(int idUser, String name, String firstname, String surname, String nif, String birthdate, String phoneNumber, String address, int idCityProvince)
+    {
+        this.idUser = idUser;
         this.name = name;
         this.firstname = firstname;
         this.surname = surname;

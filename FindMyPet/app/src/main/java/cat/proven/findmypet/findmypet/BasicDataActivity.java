@@ -1,108 +1,87 @@
 package cat.proven.findmypet.findmypet;
+
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import model.OwnerClass;
+import model.UserClass;
 
+import javax.net.ssl.HttpsURLConnection;
+import java.io.*;
+import java.net.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.acl.Owner;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.net.ssl.HttpsURLConnection;
-
-import model.OwnerClass;
-import model.UserClass;
-
 /**
- * Created by Alumne on 30/04/2016.
+ * Created by juuua on 16/05/2016.
  */
-public class LoginActivity extends AppCompatActivity {
-    Button loginButton, registerButton;
-    EditText usuariText, passwordText;
-    SharedPreferences sharedpreferences;
-    Intent in;
-OwnerClass owner = null;
+public class BasicDataActivity extends AppCompatActivity {
+    EditText name, firstname, surname, nif, birthdate, phone_number, address, username, email, oldPassword, newPassword;
+    Button modifyButton;
+    SharedPreferences sharedPref;
+    OwnerClass owner,savedOwner = null;
+    UserClass user,savedUser = null;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.login_layout);
+        setContentView(R.layout.basic_data_layout);
 
+        name = (EditText)findViewById(R.id.editText1);
+        firstname = (EditText)findViewById(R.id.editText2);
+        surname = (EditText)findViewById(R.id.editText3);
+        nif = (EditText)findViewById(R.id.editText4);
+        birthdate = (EditText)findViewById(R.id.editText5);
+        phone_number = (EditText)findViewById(R.id.editText6);
+        address = (EditText)findViewById(R.id.editText7);
+        username = (EditText)findViewById(R.id.editText8);
+        email = (EditText)findViewById(R.id.editText9);
+        oldPassword = (EditText)findViewById(R.id.editText10);
+        newPassword = (EditText)findViewById(R.id.editText11);
+        modifyButton = (Button)findViewById(R.id.modifyButton);
 
-        loginButton = (Button)findViewById(R.id.loginButton);
-        registerButton= (Button)findViewById(R.id.registerButton);
-        usuariText = (EditText)findViewById(R.id.usuariEditText);
-        passwordText = (EditText)findViewById(R.id.passwordEditText);
-        sharedpreferences = getSharedPreferences("sharedPreferences", MODE_PRIVATE);
+        loadUserBasicData();
 
-        loginButton.setOnClickListener(new View.OnClickListener() {
+        modifyButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                String oldPass = encrypt(oldPassword.getText().toString());
+                String newPass = encrypt(newPassword.getText().toString());
+                if(oldPass.equals(user.getPassword())){
+                    owner = new OwnerClass(savedOwner.getIdUser(), name.getText().toString(), firstname.getText().toString(), surname.getText().toString(), nif.getText().toString(), birthdate.getText().toString(), phone_number.getText().toString(), address.getText().toString(), owner.getIdCityProvince());
+                    if(newPassword.getText().toString()!= ""){
+                        user = new UserClass(2, username.getText().toString(), newPass, email.getText().toString(), 1);
+                    }else{
+                        user = new UserClass(2, username.getText().toString(), oldPass, email.getText().toString(), 1);
+                    }
 
-                new HttpRequestTask().execute(usuariText.getText().toString(),passwordText.getText().toString());
-
+                    new modifyBasicData().execute(owner,user);
+                }else{ messageBox("The old password isn't valid"); }
             }
         });
-
-        registerButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                //iniciar la actividad para enseñar el formulario de registro
-                cridaActivityRegister();
-
-            }
-        });
     }
 
-    private void redirectAfterLogin(UserClass user)
-    {
-        new getOwnerId().execute(user.getId());
-        messageBox("Este usuario SI existe!");
-        SharedPreferences.Editor editor = sharedpreferences.edit();
-        editor.putInt("id", user.getId());
-        editor.putString("userName", user.getUserName());
-        editor.putInt("profile", user.getIdProfile());
-        editor.commit();
-
-        in = new Intent(LoginActivity.this,MainActivity.class);
-        startActivity(in);
-        this.finish();
+    public void loadUserBasicData(){
+        SharedPreferences userDetails = getSharedPreferences("sharedPreferences", MODE_PRIVATE);
+        int id = userDetails.getInt("id",0);
+        new loadBasicData().execute(id);
     }
-
-
-
-    public void cridaActivityRegister(){
-        Intent intent = new Intent(this, RegisterActivity.class);
-        startActivity(intent);
-        this.finish();
-    }
-
-    private void messageBox(String mensaje){
-        Toast.makeText(this.getApplicationContext(),mensaje, Toast.LENGTH_SHORT).show();
-    }
-
 
     private String encrypt(String password)
     {
@@ -127,24 +106,14 @@ OwnerClass owner = null;
         return passwordmd5;
     }
 
-
-    private class HttpRequestTask extends AsyncTask<String, String, UserClass> {
-
-        UserClass usr = null;
+    private class loadBasicData extends AsyncTask<Integer, Void, Map<String, Object>> {
 
         @Override
-        protected UserClass doInBackground(String... params) {
+        protected Map<String, Object> doInBackground(Integer... params) {
 
-            UserClass u = new UserClass(params[0], params[1]);
+            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/users/getOwner/";
 
-            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/users/login/";
-
-            String passwordEncrypted = encrypt(u.getPassword());
-            u.setPassword(passwordEncrypted);
-
-            //String urlResult = urlString + u.getUserName() + "/" + passwordEncrypted;
             URL url = null;
-            //http://localhost:8080/RestFulFindMyPet/restful/users/login/
 
             try {
                 url = new URL(urlString);
@@ -168,129 +137,8 @@ OwnerClass owner = null;
             conn.setDoInput(true);
             conn.setDoOutput(true);
 
-            HashMap<String, String> postDataParams = new HashMap<String, String>();
-            postDataParams.put("username", u.getUserName());
-            postDataParams.put("password",u.getPassword());
-
-            OutputStream os = null;
-            try {
-                os = conn.getOutputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            BufferedWriter writer = null;
-            try {
-                writer = new BufferedWriter(
-                        new OutputStreamWriter(os, "UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            try {
-                writer.write(getPostDataString(postDataParams));
-
-                writer.flush();
-                writer.close();
-                os.close();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            int responseCode= 0;
-            try {
-                responseCode = conn.getResponseCode();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-
-            if (responseCode == HttpsURLConnection.HTTP_OK) {
-                String line;
-                BufferedReader br= null;
-                try {
-                    br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    while ((line=br.readLine()) != null) {
-                        response+=line;
-                    }
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-
-            }
-            else {
-                response="";
-
-            }
-
-            JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
-            usr = new Gson().fromJson(jsonObject.get("user"), UserClass.class);
-
-            return usr;
-        }
-        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
-            StringBuilder result = new StringBuilder();
-            boolean first = true;
-            for(Map.Entry<String, String> entry : params.entrySet()){
-                if (first)
-                    first = false;
-                else
-                    result.append("&");
-
-                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-                result.append("=");
-                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-            }
-
-            return result.toString();
-        }
-
-        @Override
-        protected void onPostExecute(UserClass user) {
-            if(user!=null)
-            {
-                redirectAfterLogin(user);
-            }else messageBox("Error introducing username or password");
-
-        }
-
-
-    }
-
-  private class getOwnerId extends AsyncTask<Integer, Void, Integer> {
-
-        @Override
-        protected Integer doInBackground(Integer... params) {
-
-            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/users/getOwnerId/";
-
-
-            URL url = null;
-
-
-            try {
-                url = new URL(urlString);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-            String response = "";
-            HttpURLConnection conn = null;
-            try {
-                conn = (HttpURLConnection) url.openConnection();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            conn.setReadTimeout(10000);
-            conn.setConnectTimeout(15000);
-            try {
-                conn.setRequestMethod("POST");
-            } catch (ProtocolException e) {
-                e.printStackTrace();
-            }
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-
-            HashMap<String, String> postDataParams = new HashMap<String, String>();
-            postDataParams.put("id_user", String.valueOf(params[0]));
-
+            HashMap<String, Integer> postDataParams = new HashMap<String, Integer>();
+            postDataParams.put("id_user", params[0]);
 
             OutputStream os = null;
             try {
@@ -301,7 +149,6 @@ OwnerClass owner = null;
             BufferedWriter writer = null;
             try {
                 writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
-
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
@@ -343,13 +190,17 @@ OwnerClass owner = null;
 
             JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
             owner = new Gson().fromJson(jsonObject.get("owner"), OwnerClass.class);
+            user = new Gson().fromJson(jsonObject.get("user"), UserClass.class);
 
-            return owner.getId();
+            Map<String, Object> mapping = new HashMap<>();
+            mapping.put("owner", owner);
+            mapping.put("user", user);
+            return mapping;
         }
-        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
+        private String getPostDataString(HashMap<String, Integer> params) throws UnsupportedEncodingException{
             StringBuilder result = new StringBuilder();
             boolean first = true;
-            for(Map.Entry<String, String> entry : params.entrySet()){
+            for(Map.Entry<String, Integer> entry : params.entrySet()){
                 if (first)
                     first = false;
                 else
@@ -364,11 +215,157 @@ OwnerClass owner = null;
         }
 
         @Override
-        protected void onPostExecute(Integer id_own) {
-            SharedPreferences.Editor editor = sharedpreferences.edit();
-            editor.putInt("id_owner", id_own);
-            editor.commit();
+        protected void onPostExecute(Map<String, Object> mapping) {
+            savedOwner = (OwnerClass)mapping.get("owner");
+            savedUser = (UserClass)mapping.get("user");
+
+            name.setText(savedOwner.getName());
+            firstname.setText(savedOwner.getFirstname());
+            surname.setText(savedOwner.getSurname());
+            nif.setText(savedOwner.getNif());
+            birthdate.setText(savedOwner.getBirthdate());
+            phone_number.setText(savedOwner.getPhoneNumber());
+            address.setText(savedOwner.getAddress());
+            username.setText(savedUser.getUserName());
+            email.setText(savedUser.getEmail());
         }
     }
 
+    private class modifyBasicData extends AsyncTask< Object, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(Object... params) {
+
+            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/users/modifyOwner/";
+            OwnerClass o =(OwnerClass)params[0];
+            UserClass u = (UserClass)params[1];
+
+            URL url = null;
+
+            try {
+                url = new URL(urlString);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            String response = "";
+            HttpURLConnection conn = null;
+            try {
+                conn = (HttpURLConnection) url.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(15000);
+            try {
+                conn.setRequestMethod("POST");
+            } catch (ProtocolException e) {
+                e.printStackTrace();
+            }
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+
+            HashMap<String, String> postDataParams = new HashMap<String, String>();
+            postDataParams.put("id_user", String.valueOf(o.getIdUser()));
+            postDataParams.put("name", o.getName());
+            postDataParams.put("firstname", o.getFirstname());
+            postDataParams.put("surname", o.getSurname());
+            postDataParams.put("nif", o.getNif());
+            postDataParams.put("birthdate", o.getBirthdate());
+            postDataParams.put("phone_number", o.getPhoneNumber());
+            postDataParams.put("address", o.getAddress());
+            postDataParams.put("id_city_province", String.valueOf(o.getIdCityProvince()));
+            postDataParams.put("id_profile", String.valueOf(u.getIdProfile()));
+            postDataParams.put("user_name", u.getUserName());
+            postDataParams.put("pswd", u.getPassword());
+            postDataParams.put("email", u.getEmail());
+            postDataParams.put("active", String.valueOf(u.getActive()));
+
+
+            OutputStream os = null;
+            try {
+                os = conn.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            BufferedWriter writer = null;
+            try {
+                writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                writer.write(getPostDataString(postDataParams));
+
+                writer.flush();
+                writer.close();
+                os.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            int responseCode= 0;
+            try {
+                responseCode = conn.getResponseCode();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            if (responseCode == HttpsURLConnection.HTTP_OK) {
+                String line;
+                BufferedReader br= null;
+                try {
+                    br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    while ((line=br.readLine()) != null) {
+                        response+=line;
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+            }
+            else {
+                response="";
+            }
+
+            return Integer.valueOf(response);
+        }
+        private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
+            StringBuilder result = new StringBuilder();
+            boolean first = true;
+            for(Map.Entry<String, String> entry : params.entrySet()){
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
+
+                result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            }
+
+            return result.toString();
+        }
+
+        @Override
+        protected void onPostExecute(Integer resultQ) {
+            redirectToProfile(resultQ);
+        }
+    }
+
+    public void redirectToProfile(int res){
+        if(res > 0){ messageBox("Data modified correctly"); }
+        else{ messageBox("An error occurred while data is modified"); }
+        Intent in = new Intent(BasicDataActivity.this,ProfileActivity.class);
+        startActivity(in);
+        this.finish();
+    }
+
+    public Activity getActivity() {
+        return this;
+    }
+
+    private void messageBox(String mensaje){
+        Toast.makeText(this.getApplicationContext(),mensaje, Toast.LENGTH_SHORT).show();
+    }
 }

@@ -89,8 +89,7 @@ public class MapsActivity extends FragmentActivity  {
                 new AdapterView.OnItemSelectedListener() {
                     public void onItemSelected(AdapterView<?> parent,
                                                android.view.View v, int position, long id) {
-                        flag=flag+1;
-                        if (flag>1) {
+                        if (position != 0) {
                             PetClass pet = (PetClass) ((Spinner) findViewById(R.id.petsSpinner)).getSelectedItem();
                             new getPetById().execute(String.valueOf(pet.getId()));
                         }
@@ -221,17 +220,17 @@ public class MapsActivity extends FragmentActivity  {
 
                 markerReport.put(markerOptions, report);
             }
-        }
 
-       LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        for (MarkerOptions marker : markers) {
-            builder.include(marker.getPosition());
-        }
-       LatLngBounds bounds = builder.build();
-        int padding = 100; // offset from edges of the map in pixels
-        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-        googleMap.moveCamera(cu);
 
+           LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (MarkerOptions marker : markers) {
+                builder.include(marker.getPosition());
+            }
+           LatLngBounds bounds = builder.build();
+            int padding = 100; // offset from edges of the map in pixels
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+            googleMap.moveCamera(cu);
+        }
 
     }
 
@@ -322,7 +321,9 @@ public class MapsActivity extends FragmentActivity  {
             JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
             jArray = jsonObject.getAsJsonArray("ownerPets");
             PetClass pet = null;
-
+            pet = new PetClass();
+            pet.setName("- Select a pet -");
+            pets.add(pet);
             for (int i = 0; i < jArray.size(); i++) {
                 JsonElement q = jArray.get(i);
                 pet = new Gson().fromJson(q, PetClass.class);

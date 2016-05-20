@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">FindMyPet</string>
     <string name="title_activity_maps">Map</string>
+    <string name="google_app_id">AIzaSyDRRp9Mb8b6oxgKw172xdpVEznmVuwEMes</string>
+    <string name="signin">Post</string>
+    <string name="cancel">Cancel</string>
 </resources>

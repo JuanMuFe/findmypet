@@ -1,1 +1,4 @@
-- Revisar notificaciones cuando modifica pet
+- List searchActivity
+- Image when click on pet (map)
+- Mantener menu en los demas layouts
+- Acabar pet administration admin

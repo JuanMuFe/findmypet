@@ -1,10 +1,13 @@
 package cat.proven.findmypet.findmypet;
 
-import android.content.Intent;
+import android.content.SharedPreferences;
+import android.location.Geocoder;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.ListView;
 
+import com.google.android.gms.identity.intents.Address;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -23,35 +26,61 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import model.NotificationClass;
+import model.AnnouncementClass;
+import model.OwnerClass;
+import model.ReportClass;
+import model.UserClass;
 
-public class NotificationReceiverActivity extends AppCompatActivity {
+
+/**
+ * Created by Alumne on 14/05/2016.
+ */
+public class ReportsActivity extends AppCompatActivity {
+    ListView reportsList;
+    OwnerClass owner = null;
+    ReportClass report = null;
+    ArrayList<ReportClass> reports = new ArrayList<>();
+    ArrayList<String> locations = new ArrayList<>();
+    SharedPreferences sharedpreferences;
+    Geocoder geocoder;
+    List<android.location.Address> addresses;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
-
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Bundle b = new Bundle();
-        b = getIntent().getExtras();
-        String id = b.getString("idreport");
-        new modifyActive().execute(id);
+        setContentView(R.layout.reports_layout);
+
+        reportsList = (ListView)findViewById(R.id.reportsListView);
+        sharedpreferences = getSharedPreferences("sharedPreferences", MODE_PRIVATE);
+        int id_owner = sharedpreferences.getInt("id_owner", -1);
+
+        loadUserReports(id_owner);
 
     }
 
-    private class modifyActive extends AsyncTask<String, String, Integer> {
+    public void loadUserReports(int id_owner){
+        if(id_owner > -1){
+            new loadOwnerReports().execute(id_owner);
+        }
+    }
+
+    private class loadOwnerReports extends AsyncTask<Integer, Void, ArrayList<ReportClass>> {
 
         @Override
-        protected Integer doInBackground(String... params) {
+        protected ArrayList<ReportClass> doInBackground(Integer... params) {
 
-            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/notifications/modifyReaded";
-            URL url=  null;
+            String urlString = "http://provenapps.cat:8080/RestFulFindMyPet/restful/reports/searchOwnerReports/";
+
+            URL url = null;
+
             try {
                 url = new URL(urlString);
             } catch (MalformedURLException e) {
@@ -68,16 +97,14 @@ public class NotificationReceiverActivity extends AppCompatActivity {
             conn.setConnectTimeout(15000);
             try {
                 conn.setRequestMethod("POST");
-                conn.setRequestProperty("Accept-Encoding", "");
             } catch (ProtocolException e) {
                 e.printStackTrace();
             }
             conn.setDoInput(true);
             conn.setDoOutput(true);
 
-
             HashMap<String, String> postDataParams = new HashMap<String, String>();
-            postDataParams.put("id_report", String.valueOf(params[0]));
+            postDataParams.put("id_owner", String.valueOf(params[0]));
 
             OutputStream os = null;
             try {
@@ -87,8 +114,7 @@ public class NotificationReceiverActivity extends AppCompatActivity {
             }
             BufferedWriter writer = null;
             try {
-                writer = new BufferedWriter(
-                        new OutputStreamWriter(os, "UTF-8"));
+                writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
@@ -128,14 +154,18 @@ public class NotificationReceiverActivity extends AppCompatActivity {
 
             }
 
+            JsonArray jArray= null;
+            JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+            jArray = jsonObject.getAsJsonArray("ownerReports");
 
+            for(int i = 0; i< jArray.size(); i++){
+                JsonElement q = jArray.get(i);
+                report = new Gson().fromJson(q, ReportClass.class);
+                reports.add(report);
+            }
 
-
-            return Integer.valueOf(response);
+            return reports;
         }
-
-
-
         private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException{
             StringBuilder result = new StringBuilder();
             boolean first = true;
@@ -147,28 +177,41 @@ public class NotificationReceiverActivity extends AppCompatActivity {
 
                 result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
                 result.append("=");
-                result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+                result.append(URLEncoder.encode(String.valueOf(entry.getValue()), "UTF-8"));
             }
 
             return result.toString();
         }
 
-
         @Override
-        protected void onPostExecute(Integer result) {
-
-            if(result>0)
-            {
-                redirect();
-            }
+        protected void onPostExecute(ArrayList<ReportClass> reports) {
+            fillOwnerReportsList(reports);
         }
-
-
     }
 
-        private void redirect()
-        {
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
+    public void fillOwnerReportsList(ArrayList<ReportClass> ownerReports){
+        geocoder = new Geocoder(this, Locale.getDefault());
+        //reportsList
+        for(int i=0; i<ownerReports.size(); i++){
+            String latLon = ownerReports.get(i).getLocation();
+            double lat = Double.parseDouble(latLon.split(",")[0]);
+            double lon = Double.parseDouble(latLon.split(",")[1]);
+            try {
+                addresses = geocoder.getFromLocation(lat, lon, 1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            String address = addresses.get(0).getAddressLine(0);
+            String city = addresses.get(0).getLocality();
+            String country = addresses.get(0).getCountryName();
+            String postalCode = addresses.get(0).getPostalCode();
+
+            locations.add(address+" ,"+ city +" - "+postalCode +" - "+ country);
         }
+
+        CustomReportList adapter = new CustomReportList(ReportsActivity.this, (ArrayList<ReportClass>) ownerReports, (ArrayList<String>) locations);
+        reportsList.setAdapter(adapter);
+    }
+
 }
